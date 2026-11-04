@@ -18,6 +18,9 @@ import {
   WEAPONS,
   calculateDamage,
   computeEffectiveSpread,
+  computeWeaponSpread,
+  evaluateMovementState,
+  MovementAccuracyStateId,
   sampleWeaponRecoilStep,
 } from './weapons';
 import { AGENTS } from './agents';
@@ -164,6 +167,8 @@ const _nextPos = new THREE.Vector3();
 const _muzzlePos = new THREE.Vector3();
 const _endPoint = new THREE.Vector3();
 const _upNormal = new THREE.Vector3(0, 1, 0);
+const _camUp = new THREE.Vector3(0, 1, 0);
+const _bulletDir = new THREE.Vector3();
 const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
 const _raycaster = new THREE.Raycaster();
 
@@ -361,10 +366,12 @@ export class ValorantEngine {
   private recoilYawOffset: number = 0;
   public mouseSensitivity: number = 0.0022;
 
-  // Player Kinematics
+  // Player Kinematics & Dynamic Movement Accuracy
   private position: THREE.Vector3 = new THREE.Vector3(-0.4, 0, 31.2);
   private velocity: THREE.Vector3 = new THREE.Vector3();
   private isGrounded: boolean = true;
+  private movementInaccuracy: number = 0; // 0 (standing pinpoint) to 1.0 (full run/strafe penalty)
+  private currentMovementState: MovementAccuracyStateId = 'standing';
 
   // Input State (PC + Mobile Multi-Touch)
   private keysHeld = new Set<string>();
@@ -1159,7 +1166,21 @@ export class ValorantEngine {
     return false;
   }
 
-  public purchaseAbility(key: 'c' | 'q') {
+  public purchaseAbility(key: 'c' | 'q' | 'e') {
+    if (key === 'c') {
+      const agent = AGENTS[this.playerAgent];
+      const ab = agent.abilities.c;
+      const cost = ab.cost;
+      const maxCharges = ab.maxCharges;
+      if (this.credits >= cost && this.abilityCharges.c < maxCharges) {
+        this.credits -= cost;
+        this.abilityCharges.c += 1;
+        this.hudDirty = true;
+        this.pushHUDState(false, null);
+        return true;
+      }
+      return false;
+    }
     const mod =
       key === 'q'
         ? ACTIVE_MODULES[this.rigBuild.activeSlot1]
@@ -1597,26 +1618,28 @@ export class ValorantEngine {
       target: { x: targetPoint.x, y: targetPoint.y, z: targetPoint.z },
     });
 
+    const actionKey = key as string;
+
     if (this.playerAgent === 'jett') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playDash();
         this.particleSystem.spawnSmoke(targetPoint, 12.0);
         this.setActiveBuff('AERO-SHROUD SMOKE', 'DISRUPTION', 12.0);
         this.showStatusBanner('AERO-SHROUD DEPLOYED // SIGHTLINE BLOCKED');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playDash();
         this.velocity.y = 11.8;
         this.isGrounded = false;
         this.setActiveBuff('UPDRAFT AIRBORNE', 'MOBILITY', 2.0);
         this.showStatusBanner('UPDRAFT // VERTICAL PROPULSION!');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDash();
         _euler.set(0, this.cameraYaw, 0);
         const dashDir = new THREE.Vector3(0, 0, -1).applyEuler(_euler);
         this.velocity.addScaledVector(dashDir, 25.0);
         this.setActiveBuff('TAILWIND DASH', 'MOBILITY', 1.2);
         this.showStatusBanner('TAILWIND DASH!');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         this.isBladestormActive = true;
         this.bladestormKnives = 5;
         this.updateViewModel();
@@ -1624,23 +1647,23 @@ export class ValorantEngine {
         this.showStatusBanner('BLADESTORM // 100% ACCURATE KUNAI EQUIPPED');
       }
     } else if (this.playerAgent === 'phoenix') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playDash();
         this.particleSystem.spawnFlameWall(this.position, _forward, 8.0);
         this.setActiveBuff('BLAZE FLAME WALL', 'SUPPORT', 8.0);
         this.showStatusBanner('BLAZE FLAME WALL DEPLOYED // HEALS PHOENIX');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playFlashbang();
         this.flashAlpha = 0.55;
         const count = this.botManager.blindEnemiesNear(targetPoint, 18.0, this.playerTeam);
         this.setActiveBuff(`CURVEBALL (${count} BLINDED)`, 'DISRUPTION', 3.2);
         this.showStatusBanner(`CURVEBALL FLASH // ${count} ENEMIES BLINDED!`);
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDash();
         this.particleSystem.spawnMolly(targetPoint, true, 6.5);
         this.setActiveBuff('HOT HANDS FIRE ZONE', 'SUPPORT', 6.5);
         this.showStatusBanner('HOT HANDS FIREBALL // BURNS ENEMIES & HEALS YOU');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         this.runItBackAnchor = this.position.clone();
         this.runItBackTimer = 12.0;
         this.particleSystem.spawnMolly(this.position, true, 12.0);
@@ -1648,37 +1671,37 @@ export class ValorantEngine {
         this.showStatusBanner('RUN IT BACK ACTIVE (12s RESPAWN ANCHOR)');
       }
     } else if (this.playerAgent === 'reyna') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playFlashbang();
         const eyePos = this.position.clone().addScaledVector(_forward, 6);
         this.particleSystem.spawnLeerEye(eyePos, 4.0);
         const count = this.botManager.blindEnemiesNear(eyePos, 22.0, this.playerTeam);
         this.setActiveBuff(`LEER NEARSIGHT (${count})`, 'DISRUPTION', 4.0);
         this.showStatusBanner(`LEER // ${count} ENEMIES NEARSIGHTED!`);
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playDefuseCheckpoint();
         this.health = Math.min(100, this.health + 50);
         this.shield = Math.min(50, this.shield + 25);
         this.setActiveBuff('DEVOUR OVERHEAL', 'SUPPORT', 3.0);
         this.showStatusBanner('DEVOUR // +50 HEALTH & OVERHEAL');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDash();
         this.dismissTimer = 2.8;
         this.setActiveBuff('DISMISS PHASE (INVULNERABLE)', 'MOBILITY', 2.8);
         this.showStatusBanner('DISMISS // INVULNERABLE & SPEED BOOST');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         this.empressTimer = 15.0;
         this.setActiveBuff('EMPRESS FRENZY', 'MOBILITY', 15.0);
         this.showStatusBanner('EMPRESS ACTIVE // RAPID FIRE & AUTO-DEVOUR');
       }
     } else if (this.playerAgent === 'sova') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playSpikeBeep(1100);
         this.particleSystem.spawnReconBeacon(targetPoint, 6.0);
         const tagged = this.botManager.revealEnemiesNear(targetPoint, 24.0, this.playerTeam, 6.0);
         this.setActiveBuff(`OWL DRONE SCAN (${tagged} TAGGED)`, 'RECON', 6.0);
         this.showStatusBanner(`OWL DRONE // ${tagged} ENEMIES TAGGED!`);
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playGunfire('operator', false);
         this.particleSystem.emitSparks(targetPoint, _upNormal, true, 18);
         this.particleSystem.emitTracer(this.camera.position, targetPoint);
@@ -1696,13 +1719,13 @@ export class ValorantEngine {
           }
         });
         this.showStatusBanner('SHOCK DART DETONATED!');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playSpikeBeep(960);
         this.particleSystem.spawnReconBeacon(targetPoint, 7.0);
         const tagged = this.botManager.revealEnemiesNear(targetPoint, 26.0, this.playerTeam, 7.0);
         this.setActiveBuff(`RECON BOLT (${tagged} REVEALED)`, 'RECON', 7.0);
         this.showStatusBanner(`RECON BOLT // ${tagged} ENEMIES REVEALED!`);
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         soundSystem.playGunfire('operator', false);
         this.particleSystem.spawnEnergyBeam(this.camera.position, _forward, 65);
         const enemies = this.botManager.getAliveBots(
@@ -1724,23 +1747,23 @@ export class ValorantEngine {
         this.showStatusBanner("HUNTER'S FURY // WALL-PIERCING BLAST!");
       }
     } else if (this.playerAgent === 'viper') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playDash();
         this.particleSystem.spawnMolly(targetPoint, false, 7.0, true);
         this.botManager.applyVulnerableNear(targetPoint, 5.5, this.playerTeam, 7.0);
         this.setActiveBuff('SNAKE BITE (1.5x VULNERABLE)', 'DISRUPTION', 7.0);
         this.showStatusBanner('SNAKE BITE // ACID APPLYING 1.5x VULNERABLE!');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playDash();
         this.particleSystem.spawnSmoke(targetPoint, 14.0, true);
         this.setActiveBuff('POISON CLOUD TOXIN', 'DISRUPTION', 14.0);
         this.showStatusBanner('POISON CLOUD // TOXIC ORB ACTIVE');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDash();
         this.particleSystem.spawnFlameWall(this.position, _forward, 10.0);
         this.setActiveBuff('TOXIC SCREEN WALL', 'DISRUPTION', 10.0);
         this.showStatusBanner('TOXIC SCREEN // GAS WALL RAISED');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         this.particleSystem.spawnSmoke(this.position, 18.0, true);
         this.particleSystem.spawnMolly(this.position, false, 12.0, true);
         this.botManager.applyVulnerableNear(this.position, 14.0, this.playerTeam, 12.0);
@@ -1748,7 +1771,7 @@ export class ValorantEngine {
         this.showStatusBanner("VIPER'S PIT // TOXIC CONTAINMENT ZONE!");
       }
     } else if (this.playerAgent === 'omen') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playDash();
         const tpPos = targetPoint.clone();
         tpPos.y = 0;
@@ -1759,18 +1782,18 @@ export class ValorantEngine {
         );
         this.setActiveBuff('SHROUDED STEP BLINK', 'MOBILITY', 1.5);
         this.showStatusBanner('SHROUDED STEP // SHADOW BLINK COMPLETE');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playFlashbang();
         this.particleSystem.spawnLeerEye(targetPoint, 4.5);
         const count = this.botManager.blindEnemiesNear(targetPoint, 20.0, this.playerTeam);
         this.setActiveBuff(`PARANOIA (${count} NEARSIGHTED)`, 'DISRUPTION', 4.5);
         this.showStatusBanner(`PARANOIA // ${count} ENEMIES NEARSIGHTED!`);
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDash();
         this.particleSystem.spawnSmoke(targetPoint, 15.0);
         this.setActiveBuff('DARK COVER SPHERE', 'DISRUPTION', 15.0);
         this.showStatusBanner('DARK COVER // SHADOW SPHERE DEPLOYED');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         soundSystem.playDash();
         this.dismissTimer = 3.0;
         this.position.set(0, 0, this.playerTeam === 'attackers' ? -26 : 24);
@@ -1778,7 +1801,7 @@ export class ValorantEngine {
         this.showStatusBanner('FROM THE SHADOWS // TELEPORTED BEHIND LINES!');
       }
     } else if (this.playerAgent === 'sage') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playDefuseCheckpoint();
         // Spawns a 4-segment solid crystalline barrier wall with real AABB collision & 400 HP destructible blocks!
         this.particleSystem.spawnBarrierWall(
@@ -1789,18 +1812,18 @@ export class ValorantEngine {
         );
         this.setActiveBuff('FORTIFIED BARRIER WALL (4x400 HP)', 'DEFENSIVE', 28.0);
         this.showStatusBanner('BARRIER ORB // SOLID 4-SEGMENT ICE WALL DEPLOYED!');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playDash();
         this.particleSystem.spawnSlowZone(targetPoint, 7.0);
         const count = this.botManager.slowEnemiesNear(targetPoint, 12.0, this.playerTeam);
         this.setActiveBuff(`SLOW ORB FIELD (${count} SLOWED)`, 'DEFENSIVE', 7.0);
         this.showStatusBanner('SLOW ORB // ICE CRYSTAL FIELD DEPLOYED');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playDefuseCheckpoint();
         this.health = 100;
         this.setActiveBuff('RADIANT HEALING ORB', 'SUPPORT', 4.0);
         this.showStatusBanner('HEALING ORB // RESTORED TO 100 HP');
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         soundSystem.playAceFanfare();
         const revivedName = this.botManager.reviveOneAlly(this.playerTeam);
         this.health = 100;
@@ -1813,7 +1836,7 @@ export class ValorantEngine {
         );
       }
     } else if (this.playerAgent === 'cypher') {
-      if (key === 'c') {
+      if (actionKey === 'c') {
         soundSystem.playSpikeBeep(1020);
         this.particleSystem.spawnReconBeacon(targetPoint, 12.0);
         this.particleSystem.spawnSlowZone(targetPoint, 12.0);
@@ -1821,18 +1844,18 @@ export class ValorantEngine {
         this.botManager.revealEnemiesNear(targetPoint, 12.0, this.playerTeam, 8.0);
         this.setActiveBuff('TRAPWIRE TETHER ACTIVE', 'DEFENSIVE', 12.0);
         this.showStatusBanner('TRAPWIRE // TETHER & CONCUSS ARMED');
-      } else if (key === 'q') {
+      } else if (actionKey === 'q') {
         soundSystem.playDash();
         this.particleSystem.spawnSmoke(targetPoint, 9.0);
         this.setActiveBuff('CYBER CAGE ACTIVE', 'DEFENSIVE', 9.0);
         this.showStatusBanner('CYBER CAGE // ACTIVATED');
-      } else if (key === 'e') {
+      } else if (actionKey === 'e') {
         soundSystem.playSpikeBeep(1240);
         this.particleSystem.spawnReconBeacon(targetPoint, 9.0);
         const tagged = this.botManager.revealEnemiesNear(targetPoint, 28.0, this.playerTeam, 9.0);
         this.setActiveBuff(`SPYCAM DART (${tagged} TAGGED)`, 'RECON', 9.0);
         this.showStatusBanner(`SPYCAM // ${tagged} ENEMIES TRACKED!`);
-      } else if (key === 'x') {
+      } else if (actionKey === 'x') {
         soundSystem.playSpikeDefused();
         this.particleSystem.spawnReconBeacon(new THREE.Vector3(0, 1, 0), 10.0);
         const tagged = this.botManager.revealEnemiesNear(
@@ -1904,22 +1927,45 @@ export class ValorantEngine {
       this.isCrouching,
       this.isScoped
     );
-    this.recoilPitchOffset += recoilStep.pitchStep;
-    this.recoilYawOffset += recoilStep.yawStep;
+
+    const maxPitch = weapon.maxContinuousRecoilPitch ?? 0.25;
+    const maxYaw = weapon.maxContinuousRecoilYaw ?? 0.09;
+    this.recoilPitchOffset = Math.min(maxPitch, this.recoilPitchOffset + recoilStep.pitchStep);
+    this.recoilYawOffset = Math.max(-maxYaw, Math.min(maxYaw, this.recoilYawOffset + recoilStep.yawStep));
+
+    // Synchronize camera rotation immediately so visual orientation and matrices match the shot frame
+    const totalPitch = this.cameraPitch + this.recoilPitchOffset;
+    const totalYaw = this.cameraYaw + this.recoilYawOffset;
+    this.camera.rotation.order = 'YXZ';
+    this.camera.rotation.y = totalYaw;
+    this.camera.rotation.x = totalPitch;
+    this.camera.rotation.z = this.cameraRoll;
+    this.camera.updateMatrixWorld();
 
     if (this.currentViewModel) {
       this.currentViewModel.position.z += recoilStep.viewKickZ;
       this.currentViewModel.rotation.x -= recoilStep.viewKickPitch;
     }
 
-    const isMoving = this.velocity.lengthSq() > 0.5;
-    const spread = computeEffectiveSpread(
-      weapon,
-      isMoving,
+    // Evaluate dynamic movement accuracy state based on actual velocity
+    const movementEval = evaluateMovementState(
+      this.velocity,
+      this.cameraYaw,
+      this.isGrounded,
+      this.landingDipOffset,
       this.isCrouching,
-      this.isScoped,
-      this.continuousShots
+      this.isSprinting,
+      this.isScoped
     );
+    this.currentMovementState = movementEval.state;
+
+    const spreadResult = computeWeaponSpread(
+      weapon,
+      movementEval,
+      this.continuousShots,
+      this.movementInaccuracy
+    );
+    const finalSpread = spreadResult.finalSpread;
 
     const pelletCount = weapon.pellets || 1;
     _muzzlePos.set(0.22, -0.18, -0.5).applyEuler(this.camera.rotation).add(this.camera.position);
@@ -1944,13 +1990,24 @@ export class ValorantEngine {
     // Include destructible 3D deployables (Sage Barrier Segments, Recon Beacons)
     const destructibleMeshes = this.particleSystem.getDestructibleMeshes();
 
-    for (let p = 0; p < pelletCount; p++) {
-      this.writeForwardDirection(_forward);
-      _forward.x += (Math.random() - 0.5) * spread;
-      _forward.y += (Math.random() - 0.5) * spread;
-      _forward.normalize();
+    // Base aim direction aligned with camera view and crosshair
+    this.writeForwardDirection(_forward);
 
-      _raycaster.set(this.camera.position, _forward);
+    // Screen-space orthogonal basis vectors for true conical spread
+    _euler.set(totalPitch, totalYaw, 0, 'YXZ');
+    _right.set(1, 0, 0).applyEuler(_euler).normalize();
+    _camUp.set(0, 1, 0).applyEuler(_euler).normalize();
+
+    for (let p = 0; p < pelletCount; p++) {
+      const spreadAngle = Math.random() * Math.PI * 2;
+      const spreadRadius = Math.sqrt(Math.random()) * finalSpread;
+      _bulletDir
+        .copy(_forward)
+        .addScaledVector(_right, Math.cos(spreadAngle) * spreadRadius)
+        .addScaledVector(_camUp, Math.sin(spreadAngle) * spreadRadius)
+        .normalize();
+
+      _raycaster.set(this.camera.position, _bulletDir);
       _raycaster.far = 130;
 
       const wallHits = _raycaster.intersectObjects(
@@ -1961,7 +2018,7 @@ export class ValorantEngine {
       const closestWallPoint =
         wallHits.length > 0
           ? wallHits[0].point
-          : _endPoint.copy(this.camera.position).addScaledVector(_forward, 65);
+          : _endPoint.copy(this.camera.position).addScaledVector(_bulletDir, 65);
       const closestWallNormal =
         wallHits.length > 0 && wallHits[0].face
           ? wallHits[0].face.normal
@@ -2639,14 +2696,43 @@ export class ValorantEngine {
       }
     }
 
-    // 6. RECOIL RECOVERY
+    // 6. RECOIL RECOVERY (Smooth exponential return when firing stops)
     const activeWep = WEAPONS[this.getActiveWeaponId()];
-    const recRate = activeWep ? activeWep.recoilRecoveryRate : 5.0;
-    this.recoilPitchOffset = Math.max(0, this.recoilPitchOffset - recRate * dt * 0.055);
-    this.recoilYawOffset *= Math.exp(-recRate * dt);
+    const recRate = activeWep ? activeWep.recoilRecoveryRate : 6.0;
+    if (!this.isMouseDown || this.isReloading) {
+      const decay = Math.exp(-recRate * 2.8 * dt);
+      this.recoilPitchOffset *= decay;
+      this.recoilYawOffset *= decay;
+      if (this.recoilPitchOffset < 0.0001) this.recoilPitchOffset = 0;
+      if (Math.abs(this.recoilYawOffset) < 0.0001) this.recoilYawOffset = 0;
+    }
 
-    // 7. PLAYER MOVEMENT & COLLISION
+    // 7. PLAYER MOVEMENT & COLLISION (Unmodified fluid movement physics)
     this.updatePlayerMovement(dt);
+
+    // Dynamic Movement-Based Accuracy Tracking & Smooth Recovery
+    const moveEval = evaluateMovementState(
+      this.velocity,
+      this.cameraYaw,
+      this.isGrounded,
+      this.landingDipOffset,
+      this.isCrouching,
+      this.isSprinting,
+      this.isScoped
+    );
+    this.currentMovementState = moveEval.state;
+
+    if (moveEval.horizontalSpeed > 0.4 || !this.isGrounded) {
+      // Rapid penalty build-up when moving or airborne
+      this.movementInaccuracy = Math.min(1.0, this.movementInaccuracy + dt * 22.0);
+    } else {
+      // Smooth, rapid counter-strafe recovery to pinpoint first-shot accuracy
+      this.movementInaccuracy = Math.max(0, this.movementInaccuracy - dt * 14.0);
+    }
+
+    if (this.landingDipOffset > 0) {
+      this.landingDipOffset = Math.max(0, this.landingDipOffset - dt * 0.45);
+    }
 
     // 8. CAMERA, SPRINT FOV SURGE & VIEWMODEL MULTI-STAGE ANIMATION
     if (!this.isScoped) {
@@ -3079,8 +3165,10 @@ export class ValorantEngine {
   }
 
   private writeForwardDirection(out: THREE.Vector3): THREE.Vector3 {
-    _euler.set(this.cameraPitch, this.cameraYaw, 0, 'YXZ');
-    return out.set(0, 0, -1).applyEuler(_euler);
+    const totalPitch = this.cameraPitch + this.recoilPitchOffset;
+    const totalYaw = this.cameraYaw + this.recoilYawOffset;
+    _euler.set(totalPitch, totalYaw, 0, 'YXZ');
+    return out.set(0, 0, -1).applyEuler(_euler).normalize();
   }
 
   private pushHUDState(isInsidePlantZone: boolean, site: 'A' | 'B' | null) {

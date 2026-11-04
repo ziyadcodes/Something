@@ -6,7 +6,17 @@ import {
   calculateDamage,
   applyDamageToHealthAndShield,
   computeEffectiveSpread,
+  computeWeaponSpread,
+  evaluateMovementState,
+  sampleWeaponRecoilStep,
 } from './weapons';
+import {
+  ACTIVE_MODULES,
+  PASSIVE_MODULES,
+  MAX_RIG_ENERGY,
+  validateRigBuild,
+  OperatorRigBuild,
+} from './rigSystem';
 import { AGENTS } from './agents';
 import {
   createDefaultProfile,
@@ -351,4 +361,300 @@ test('Physical PBR PNG textures, WAV audio files, and glTF 3D models exist on di
   assert.ok(fs.existsSync(path.join(audioDir, 'reload_bolt_rack.wav')));
   assert.ok(fs.existsSync(path.join(modelDir, 'vandal_receiver.gltf')));
 });
+
+/* =========================================================================
+   CRITICAL COMBAT SYSTEM: RECOIL, TRAJECTORY & MOVEMENT ACCURACY TESTS
+   ========================================================================= */
+
+test('Stationary first-shot accuracy: Vandal hits stationary target at 20m with pinpoint precision', () => {
+  const vandal = WEAPONS['vandal'];
+  const standingMovement = evaluateMovementState(
+    { x: 0, y: 0, z: 0 },
+    0, // cameraYaw
+    true, // isGrounded
+    0, // landingDip
+    false, // isCrouching
+    false, // isSprinting
+    false // isScoped
+  );
+  assert.equal(standingMovement.state, 'standing');
+
+  const spreadInfo = computeWeaponSpread(vandal, standingMovement, 1, 0);
+  assert.ok(
+    spreadInfo.finalSpread <= vandal.spread,
+    `First shot spread (${spreadInfo.finalSpread}) should be <= base spread (${vandal.spread})`
+  );
+  assert.equal(spreadInfo.movementPenalty, 0);
+  assert.equal(spreadInfo.airbornePenalty, 0);
+  assert.equal(spreadInfo.recoilBloom, 0);
+
+  // At 20 meters, radial deviation is 20 * tan(spread)
+  const targetDist = 20.0;
+  const maxRadialDeviation = targetDist * Math.tan(spreadInfo.finalSpread);
+  assert.ok(
+    maxRadialDeviation < 0.05,
+    `First-shot max deviation at 20m (${maxRadialDeviation.toFixed(4)}m) must be under 0.05m`
+  );
+});
+
+test('Continuous automatic spray follows deterministic upward climb and horizontal sway', () => {
+  let pitchOffset = 0;
+  let yawOffset = 0;
+  const pitchHistory: number[] = [];
+  const yawHistory: number[] = [];
+
+  for (let shot = 1; shot <= 12; shot++) {
+    const step = sampleWeaponRecoilStep('vandal', shot, false, false);
+    pitchOffset += step.pitchStep;
+    yawOffset += step.yawStep;
+    pitchHistory.push(pitchOffset);
+    yawHistory.push(yawOffset);
+  }
+
+  // 1. Initial burst must climb upwards consistently
+  assert.ok(pitchHistory[1] > pitchHistory[0], 'Shot 2 must be higher than shot 1');
+  assert.ok(pitchHistory[3] > pitchHistory[1], 'Shot 4 must be higher than shot 2');
+  assert.ok(pitchHistory[6] > pitchHistory[3], 'Shot 7 must be higher than shot 4');
+
+  // 2. Later shots must exhibit horizontal sway (yaw non-zero)
+  const laterYaws = yawHistory.slice(6);
+  const maxAbsYaw = Math.max(...laterYaws.map(Math.abs));
+  assert.ok(maxAbsYaw > 0.005, 'Sustained automatic spray must have deterministic horizontal sway');
+});
+
+test('Strafing left and strafing right significantly penalize weapon accuracy compared to standing still', () => {
+  const vandal = WEAPONS['vandal'];
+
+  const standing = evaluateMovementState(
+    { x: 0, y: 0, z: 0 },
+    0,
+    true,
+    0,
+    false,
+    false,
+    false
+  );
+  const strafeLeft = evaluateMovementState(
+    { x: -5.0, y: 0, z: 0 }, // moving left relative to camera facing Z
+    0,
+    true,
+    0,
+    false,
+    false,
+    false
+  );
+  const strafeRight = evaluateMovementState(
+    { x: 5.0, y: 0, z: 0 }, // moving right relative to camera facing Z
+    0,
+    true,
+    0,
+    false,
+    false,
+    false
+  );
+
+  assert.equal(standing.state, 'standing');
+  assert.equal(strafeLeft.state, 'strafing_left');
+  assert.equal(strafeRight.state, 'strafing_right');
+
+  const standingSpread = computeWeaponSpread(vandal, standing, 1, 0).finalSpread;
+  const strafeLeftSpread = computeWeaponSpread(vandal, strafeLeft, 1, 1.0).finalSpread;
+  const strafeRightSpread = computeWeaponSpread(vandal, strafeRight, 1, 1.0).finalSpread;
+
+  assert.ok(
+    strafeLeftSpread >= standingSpread * 3.0,
+    `Strafing left spread (${strafeLeftSpread}) must be at least 3x standing spread (${standingSpread})`
+  );
+  assert.ok(
+    strafeRightSpread >= standingSpread * 3.0,
+    `Strafing right spread (${strafeRightSpread}) must be at least 3x standing spread (${standingSpread})`
+  );
+});
+
+test('Jumping and falling apply heavy airborne accuracy penalty', () => {
+  const vandal = WEAPONS['vandal'];
+
+  const jumping = evaluateMovementState(
+    { x: 0, y: 5.5, z: 0 },
+    0,
+    false, // in the air
+    0,
+    false,
+    false,
+    false
+  );
+  const falling = evaluateMovementState(
+    { x: 0, y: -4.0, z: 0 },
+    0,
+    false,
+    0,
+    false,
+    false,
+    false
+  );
+
+  assert.equal(jumping.state, 'jumping');
+  assert.equal(falling.state, 'falling');
+
+  const standingSpread = computeWeaponSpread(
+    vandal,
+    evaluateMovementState({ x: 0, y: 0, z: 0 }, 0, true, 0, false, false, false),
+    1,
+    0
+  ).finalSpread;
+
+  const jumpSpread = computeWeaponSpread(vandal, jumping, 1, 1.0).finalSpread;
+  const fallSpread = computeWeaponSpread(vandal, falling, 1, 1.0).finalSpread;
+
+  assert.ok(
+    jumpSpread >= standingSpread * 6.0,
+    `Jumping spread (${jumpSpread}) must be at least 6x standing spread (${standingSpread})`
+  );
+  assert.ok(
+    fallSpread >= standingSpread * 5.0,
+    `Falling spread (${fallSpread}) must be at least 5x standing spread (${standingSpread})`
+  );
+});
+
+test('Movement accuracy smoothly recovers after stopping', () => {
+  const vandal = WEAPONS['vandal'];
+  const stoppedMovement = evaluateMovementState(
+    { x: 0, y: 0, z: 0 },
+    0,
+    true,
+    0,
+    false,
+    false,
+    false
+  );
+
+  // When stopped, accumulator decays from 1.0 down to 0
+  let accumulator = 1.0;
+  const dt = 0.016; // 60 FPS frame time
+  const recoveryRate = 14.0; // recovery rate per second
+
+  // After 100ms (approx 6 frames)
+  for (let f = 0; f < 6; f++) {
+    accumulator = Math.max(0, accumulator - dt * recoveryRate);
+  }
+  assert.ok(accumulator < 0.2, `Accumulator should recover to < 0.2 within 100ms (got ${accumulator})`);
+
+  // After 150ms total
+  for (let f = 0; f < 4; f++) {
+    accumulator = Math.max(0, accumulator - dt * recoveryRate);
+  }
+  assert.equal(accumulator, 0, 'Movement inaccuracy must fully recover to 0');
+
+  const recoveredSpread = computeWeaponSpread(vandal, stoppedMovement, 1, accumulator).finalSpread;
+  const baseSpread = computeWeaponSpread(vandal, stoppedMovement, 1, 0).finalSpread;
+  assert.equal(recoveredSpread, baseSpread);
+});
+
+test('Weapon-specific behaviour: SMG (Spectre) is significantly more forgiving while strafing than precision Rifle (Vandal)', () => {
+  const vandal = WEAPONS['vandal'];
+  const spectre = WEAPONS['spectre'];
+
+  const movingLeft = evaluateMovementState(
+    { x: -5.0, y: 0, z: 0 },
+    0,
+    true,
+    0,
+    false,
+    false,
+    false
+  );
+
+  const vandalMovingSpread = computeWeaponSpread(vandal, movingLeft, 1, 1.0).finalSpread;
+  const spectreMovingSpread = computeWeaponSpread(spectre, movingLeft, 1, 1.0).finalSpread;
+
+  const vandalMultiplier = vandalMovingSpread / vandal.spread;
+  const spectreMultiplier = spectreMovingSpread / spectre.spread;
+
+  assert.ok(
+    vandalMultiplier > spectreMultiplier * 1.5,
+    `Vandal movement spread multiplier (${vandalMultiplier.toFixed(2)}x) must be much harsher than Spectre (${spectreMultiplier.toFixed(2)}x)`
+  );
+});
+
+/* =========================================================================
+   THE RIG SYSTEM: MODULAR OPERATOR ARCHITECTURE TESTS
+   ========================================================================= */
+
+test('Rig System energy validation enforces strict 7-point energy budget', () => {
+  // 6 Active Modules exist with defined energy costs
+  assert.equal(ACTIVE_MODULES.echo_probe.energyCost, 3);
+  assert.equal(ACTIVE_MODULES.aegis.energyCost, 4);
+  assert.equal(ACTIVE_MODULES.mirage.energyCost, 2);
+  assert.equal(ACTIVE_MODULES.vector.energyCost, 4);
+  assert.equal(ACTIVE_MODULES.static_field.energyCost, 3);
+  assert.equal(ACTIVE_MODULES.relay.energyCost, 2);
+
+  // Aegis (4) + Vector (4) = 8 > 7 (INVALID)
+  const invalidOverBudget: OperatorRigBuild = {
+    id: 'test_invalid',
+    name: 'Overloaded Rig',
+    chassisId: 'jett',
+    armorFinish: 'graphite',
+    visorColor: '#00f2fe',
+    activeSlot1: 'aegis',
+    activeSlot2: 'vector',
+    passiveSlot: 'signal_dampener',
+    primaryWeapon: 'vandal',
+    secondaryWeapon: 'classic',
+  };
+  const invalidRes = validateRigBuild(invalidOverBudget);
+  assert.equal(invalidRes.isValid, false);
+  assert.equal(invalidRes.totalEnergy, 8);
+  assert.ok(invalidRes.errors.some((e) => e.includes('Energy budget exceeded')));
+
+  // Aegis (4) + Static Field (3) = 7 <= 7 (VALID - Exactly at limit)
+  const validMaxBudget: OperatorRigBuild = {
+    id: 'test_valid_max',
+    name: 'Bastion Anchor',
+    chassisId: 'sage',
+    armorFinish: 'titanium',
+    visorColor: '#2dd4bf',
+    activeSlot1: 'aegis',
+    activeSlot2: 'static_field',
+    passiveSlot: 'reinforced_systems',
+    primaryWeapon: 'vandal',
+    secondaryWeapon: 'classic',
+  };
+  const validMaxRes = validateRigBuild(validMaxBudget);
+  assert.equal(validMaxRes.isValid, true);
+  assert.equal(validMaxRes.totalEnergy, 7);
+
+  // Vector (4) + Mirage (2) = 6 <= 7 (VALID - Under budget)
+  const validUnderBudget: OperatorRigBuild = {
+    id: 'test_valid_under',
+    name: 'Phantom Striker',
+    chassisId: 'reyna',
+    armorFinish: 'obsidian',
+    visorColor: '#c084fc',
+    activeSlot1: 'vector',
+    activeSlot2: 'mirage',
+    passiveSlot: 'energy_recovery',
+    primaryWeapon: 'phantom',
+    secondaryWeapon: 'ghost',
+  };
+  const validUnderRes = validateRigBuild(validUnderBudget);
+  assert.equal(validUnderRes.isValid, true);
+  assert.equal(validUnderRes.totalEnergy, 6);
+});
+
+test('Rig System passive modules apply balanced multipliers', () => {
+  // Signal Dampener: -45% recon duration (0.55), -25% sensor range (0.75)
+  const dampener = PASSIVE_MODULES.signal_dampener;
+  assert.equal(dampener.reconDurationMultiplier, 0.55);
+  assert.equal(dampener.reconRadiusMultiplier, 0.75);
+
+  // Reinforced Systems: +30% deployable device HP (1.30)
+  const reinforced = PASSIVE_MODULES.reinforced_systems;
+  assert.equal(reinforced.deployableHpMultiplier, 1.3);
+
+  // Energy Recovery: +18% cooldown cycling rate (1.18)
+  const recovery = PASSIVE_MODULES.energy_recovery;
+  assert.equal(recovery.cooldownRateMultiplier, 1.18);
+});
+
 

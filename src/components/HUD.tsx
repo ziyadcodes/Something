@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EngineHUDState } from '../game/engine';
 import { ChatMessage, CrosshairConfig, KillfeedEntry } from '../types/game';
 import { AGENTS } from '../game/agents';
+import { ACTIVE_MODULES, PASSIVE_MODULES } from '../game/rigSystem';
 import {
   Shield,
   Heart,
@@ -85,6 +86,8 @@ export const HUD: React.FC<HUDProps> = React.memo(({
     switch (iconName) {
       case 'Flame':
         return <Flame className="w-4 h-4" />;
+      case 'Shield':
+        return <Shield className="w-4 h-4" />;
       case 'Sun':
         return <Sun className="w-4 h-4" />;
       case 'Sparkles':
@@ -143,7 +146,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none select-none z-10 font-tech">
+    <div className="fixed inset-0 pointer-events-none select-none z-20 font-tech">
       {/* 1. DAMAGE BORDER ON HIT */}
       {state.damageVignette > 0 && (
         <div
@@ -848,11 +851,40 @@ export const HUD: React.FC<HUDProps> = React.memo(({
 
       {/* 14. BOTTOM CENTER: CLICKABLE / TAPPABLE AGENT ABILITIES (C, Q, E, X) */}
       <div className="absolute bottom-[92px] sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        {state.rigBuild && PASSIVE_MODULES[state.rigBuild.passiveSlot] && (
+          <div className="hidden sm:flex flex-col items-center justify-center px-2 py-1.5 bg-slate-950/90 border border-slate-800 clip-val-corner text-center min-w-[58px]">
+            <span className="text-[7px] text-slate-500 uppercase font-bold tracking-wider">PAS MOD</span>
+            <span className="text-[8px] font-bold text-amber-400 truncate max-w-[55px]">
+              {PASSIVE_MODULES[state.rigBuild.passiveSlot].name.split(' ')[0]}
+            </span>
+          </div>
+        )}
+
         {(['c', 'q', 'e', 'x'] as const).map((key) => {
-          const ability = currentAgent.abilities[key];
+          let abilityName = currentAgent.abilities[key].name;
+          let iconName = currentAgent.abilities[key].iconName;
+          let maxCharges = currentAgent.abilities[key].maxCharges;
+          const isUltimate = key === 'x';
+
+          if (state.rigBuild && key === 'q') {
+            const m = ACTIVE_MODULES[state.rigBuild.activeSlot1];
+            if (m) {
+              abilityName = m.name;
+              iconName = m.iconName;
+              maxCharges = m.maxCharges;
+            }
+          } else if (state.rigBuild && key === 'e') {
+            const m = ACTIVE_MODULES[state.rigBuild.activeSlot2];
+            if (m) {
+              abilityName = m.name;
+              iconName = m.iconName;
+              maxCharges = m.maxCharges;
+            }
+          }
+
           const charges = state.abilityCharges[key];
           const cooldown = state.abilityCooldowns[key];
-          const isReady = ability.isUltimate
+          const isReady = isUltimate
             ? state.ultPoints >= state.ultMax || charges > 0
             : charges > 0 && cooldown <= 0;
 
@@ -875,9 +907,9 @@ export const HUD: React.FC<HUDProps> = React.memo(({
                   : 'border-slate-800 text-slate-500 opacity-60'
               }`}
             >
-              {!ability.isUltimate ? (
+              {!isUltimate ? (
                 <div className="flex gap-1 mb-0.5">
-                  {Array.from({ length: ability.maxCharges }).map((_, i) => (
+                  {Array.from({ length: maxCharges }).map((_, i) => (
                     <div
                       key={i}
                       className={`w-2 h-1 rounded-sm ${
@@ -893,11 +925,11 @@ export const HUD: React.FC<HUDProps> = React.memo(({
               )}
 
               <div className="w-5 h-5 flex items-center justify-center">
-                {getAbilityIcon(ability.iconName)}
+                {getAbilityIcon(iconName)}
               </div>
 
               <span className="text-[8px] font-bold tracking-wider uppercase truncate max-w-[60px]">
-                {ability.name}
+                {abilityName}
               </span>
 
               <span className="text-[9px] font-bold uppercase px-1 bg-slate-800 rounded text-cyan-300">

@@ -2,7 +2,12 @@ import React from 'react';
 import { AgentId, WeaponId } from '../types/game';
 import { WEAPONS } from '../game/weapons';
 import { AGENTS } from '../game/agents';
-import { Shield, X, DollarSign, Crosshair, Zap } from 'lucide-react';
+import { Shield, X, DollarSign, Crosshair, Zap, Cpu } from 'lucide-react';
+import {
+  ACTIVE_MODULES,
+  PASSIVE_MODULES,
+  OperatorRigBuild,
+} from '../game/rigSystem';
 
 interface BuyMenuProps {
   isOpen: boolean;
@@ -10,10 +15,11 @@ interface BuyMenuProps {
   currentShield: number;
   activeWeaponId: WeaponId;
   selectedAgent: AgentId;
+  rigBuild?: OperatorRigBuild;
   onClose: () => void;
   onBuyWeapon: (weaponId: WeaponId) => void;
   onBuyShield: (type: 'light' | 'heavy') => void;
-  onBuyAbility: (key: 'c' | 'q') => void;
+  onBuyAbility: (key: 'c' | 'q' | 'e') => void;
 }
 
 export const BuyMenu: React.FC<BuyMenuProps> = ({
@@ -22,6 +28,7 @@ export const BuyMenu: React.FC<BuyMenuProps> = ({
   currentShield,
   activeWeaponId,
   selectedAgent,
+  rigBuild,
   onClose,
   onBuyWeapon,
   onBuyShield,
@@ -197,37 +204,152 @@ export const BuyMenu: React.FC<BuyMenuProps> = ({
               <span className="font-mono text-xs font-bold text-amber-400">$1000</span>
             </button>
 
-            <div className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-1 mt-2">
-              {agent.name} TACTICAL CHARGES
-            </div>
+            {rigBuild ? (
+              <>
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-1 mt-2">
+                  <span>RIG LOADOUT // {rigBuild.name}</span>
+                  <span className="text-[9px] text-cyan-300 font-mono">
+                    MODULAR
+                  </span>
+                </div>
 
-            {(['c', 'q'] as const).map((key) => {
-              const ab = agent.abilities[key];
-              const canAfford = credits >= ab.cost;
-              return (
-                <button
-                  key={key}
-                  onClick={() => onBuyAbility(key)}
-                  disabled={!canAfford}
-                  className={`flex items-center justify-between p-3 border clip-val-corner cursor-pointer ${
-                    canAfford
-                      ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
-                      : 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    <div className="text-left">
-                      <div className="font-valorant text-lg font-bold">
-                        [{key.toUpperCase()}] {ab.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400">Max {ab.maxCharges} charges</div>
+                {/* Passive Module Info Chip */}
+                {PASSIVE_MODULES[rigBuild.passiveSlot] && (
+                  <div className="p-2 bg-slate-950/80 border border-slate-800 rounded flex items-center justify-between text-[10px]">
+                    <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                      <Cpu className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{PASSIVE_MODULES[rigBuild.passiveSlot].name}</span>
                     </div>
+                    <span className="text-slate-400 text-[9px] uppercase">PASSIVE INSTALLED</span>
                   </div>
-                  <span className="font-mono text-xs font-bold text-amber-400">${ab.cost}</span>
-                </button>
-              );
-            })}
+                )}
+
+                {/* Active Module 1 [Q] */}
+                {ACTIVE_MODULES[rigBuild.activeSlot1] && (() => {
+                  const m = ACTIVE_MODULES[rigBuild.activeSlot1];
+                  const canAfford = credits >= m.creditCost;
+                  return (
+                    <button
+                      key="q"
+                      onClick={() => onBuyAbility('q')}
+                      disabled={!canAfford}
+                      className={`flex items-center justify-between p-3 border clip-val-corner cursor-pointer ${
+                        canAfford
+                          ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-cyan-400" />
+                        <div className="text-left">
+                          <div className="font-valorant text-lg font-bold">
+                            [Q] {m.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {m.category} · {m.energyCost} Energy · Max {m.maxCharges} Charges
+                          </div>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-amber-400">${m.creditCost}</span>
+                    </button>
+                  );
+                })()}
+
+                {/* Active Module 2 [E] */}
+                {ACTIVE_MODULES[rigBuild.activeSlot2] && (() => {
+                  const m = ACTIVE_MODULES[rigBuild.activeSlot2];
+                  const canAfford = credits >= m.creditCost;
+                  return (
+                    <button
+                      key="e"
+                      onClick={() => onBuyAbility('e')}
+                      disabled={!canAfford}
+                      className={`flex items-center justify-between p-3 border clip-val-corner cursor-pointer ${
+                        canAfford
+                          ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-emerald-400" />
+                        <div className="text-left">
+                          <div className="font-valorant text-lg font-bold">
+                            [E] {m.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {m.category} · {m.energyCost} Energy · Max {m.maxCharges} Charges
+                          </div>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-amber-400">${m.creditCost}</span>
+                    </button>
+                  );
+                })()}
+
+                {/* Base Tactical [C] */}
+                {(() => {
+                  const ab = agent.abilities.c;
+                  const canAfford = credits >= ab.cost;
+                  return (
+                    <button
+                      key="c"
+                      onClick={() => onBuyAbility('c')}
+                      disabled={!canAfford}
+                      className={`flex items-center justify-between p-3 border clip-val-corner cursor-pointer ${
+                        canAfford
+                          ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-400" />
+                        <div className="text-left">
+                          <div className="font-valorant text-lg font-bold">
+                            [C] {ab.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400">TACTICAL UTILITY · Max {ab.maxCharges} Charges</div>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-amber-400">${ab.cost}</span>
+                    </button>
+                  );
+                })()}
+              </>
+            ) : (
+              <>
+                <div className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-1 mt-2">
+                  {agent.name} TACTICAL CHARGES
+                </div>
+
+                {(['c', 'q'] as const).map((key) => {
+                  const ab = agent.abilities[key];
+                  const canAfford = credits >= ab.cost;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => onBuyAbility(key)}
+                      disabled={!canAfford}
+                      className={`flex items-center justify-between p-3 border clip-val-corner cursor-pointer ${
+                        canAfford
+                          ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-950/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-400" />
+                        <div className="text-left">
+                          <div className="font-valorant text-lg font-bold">
+                            [{key.toUpperCase()}] {ab.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400">Max {ab.maxCharges} charges</div>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-amber-400">${ab.cost}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
       </div>

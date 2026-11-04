@@ -47,11 +47,18 @@ export interface WeaponData {
     leg: number;
   };
   spread: number; // base spread angle in radians
+  firstShotSpread?: number; // pinpoint first-shot accuracy
   crouchSpreadMult: number;
   moveSpreadMult: number;
+  strafeSpreadMult?: number; // penalty specifically when strafing laterally
+  airborneSpreadPenalty?: number; // penalty when jumping or falling
+  landingSpreadPenalty?: number; // penalty immediately upon landing impact
   recoilPitch: number; // upward kick per shot
   recoilYaw: number; // lateral horizontal drift
   recoilRecoveryRate: number; // speed at which crosshair settles back
+  recoilAccumulationRate?: number; // multiplier for spray bloom accumulation
+  maxContinuousRecoilPitch?: number; // ceiling for upward climb
+  maxContinuousRecoilYaw?: number; // ceiling for horizontal sway
   isAutomatic: boolean;
   hasScope: boolean;
   scopeZoom: number; // e.g. 2.5x or 5.0x

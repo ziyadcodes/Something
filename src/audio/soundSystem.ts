@@ -50,7 +50,7 @@ class SoundSystem {
     }
   }
 
-  private playWavBuffer(name: string, volume: number, playbackRate = 1.0): boolean {
+  public playWavBuffer(name: string, volume: number, playbackRate = 1.0): boolean {
     const ctx = this.ctx;
     const buf = this.wavBuffers.get(name);
     if (!ctx || !buf) return false;
@@ -203,6 +203,14 @@ class SoundSystem {
       bolt_rack: 'reload_bolt_rack',
     } as const;
     if (!this.playWavBuffer(wavMap[stage], 0.32 * sfx)) {
+      this.playReload();
+    }
+  }
+
+  public playWeaponSwitch() {
+    const sfx = this.getSfxScale();
+    if (sfx <= 0.01) return;
+    if (!this.playWavBuffer('reload_bolt_rack', 0.18 * sfx, 1.4)) {
       this.playReload();
     }
   }

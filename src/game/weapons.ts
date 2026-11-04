@@ -60,11 +60,18 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     reloadTime: 0,
     damage: { head: 100, body: 50, leg: 42 },
     spread: 0,
+    firstShotSpread: 0,
     crouchSpreadMult: 1,
     moveSpreadMult: 1,
+    strafeSpreadMult: 1,
+    airborneSpreadPenalty: 0,
+    landingSpreadPenalty: 0,
     recoilPitch: 0,
     recoilYaw: 0,
     recoilRecoveryRate: 10,
+    recoilAccumulationRate: 0,
+    maxContinuousRecoilPitch: 0,
+    maxContinuousRecoilYaw: 0,
     isAutomatic: false,
     hasScope: false,
     scopeZoom: 1,
@@ -79,12 +86,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 6.75,
     reloadTime: 1.5,
     damage: { head: 78, body: 26, leg: 22 },
-    spread: 0.012,
+    spread: 0.0075,
+    firstShotSpread: 0.0035,
     crouchSpreadMult: 0.65,
     moveSpreadMult: 2.2,
+    strafeSpreadMult: 2.6,
+    airborneSpreadPenalty: 0.045,
+    landingSpreadPenalty: 0.025,
     recoilPitch: 0.022,
     recoilYaw: 0.008,
-    recoilRecoveryRate: 4.5,
+    recoilRecoveryRate: 6.5,
+    recoilAccumulationRate: 1.0,
+    maxContinuousRecoilPitch: 0.12,
+    maxContinuousRecoilYaw: 0.035,
     isAutomatic: false,
     hasScope: false,
     scopeZoom: 1,
@@ -99,12 +113,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 6.75,
     reloadTime: 1.5,
     damage: { head: 105, body: 30, leg: 25 },
-    spread: 0.008,
+    spread: 0.0055,
+    firstShotSpread: 0.0022,
     crouchSpreadMult: 0.6,
-    moveSpreadMult: 2.0,
+    moveSpreadMult: 2.6,
+    strafeSpreadMult: 3.0,
+    airborneSpreadPenalty: 0.055,
+    landingSpreadPenalty: 0.03,
     recoilPitch: 0.024,
     recoilYaw: 0.007,
-    recoilRecoveryRate: 5.0,
+    recoilRecoveryRate: 7.0,
+    recoilAccumulationRate: 1.05,
+    maxContinuousRecoilPitch: 0.13,
+    maxContinuousRecoilYaw: 0.035,
     isAutomatic: false,
     hasScope: false,
     scopeZoom: 1,
@@ -119,12 +140,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 4.0,
     reloadTime: 2.25,
     damage: { head: 160, body: 55, leg: 47 },
-    spread: 0.006,
+    spread: 0.0045,
+    firstShotSpread: 0.0015,
     crouchSpreadMult: 0.55,
-    moveSpreadMult: 2.8,
+    moveSpreadMult: 4.2,
+    strafeSpreadMult: 4.8,
+    airborneSpreadPenalty: 0.095,
+    landingSpreadPenalty: 0.05,
     recoilPitch: 0.048,
     recoilYaw: 0.014,
-    recoilRecoveryRate: 3.5,
+    recoilRecoveryRate: 5.5,
+    recoilAccumulationRate: 1.35,
+    maxContinuousRecoilPitch: 0.22,
+    maxContinuousRecoilYaw: 0.055,
     isAutomatic: false,
     hasScope: false,
     scopeZoom: 1,
@@ -139,12 +167,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 13.33,
     reloadTime: 2.25,
     damage: { head: 78, body: 26, leg: 22 },
-    spread: 0.014,
+    spread: 0.008,
+    firstShotSpread: 0.0045,
     crouchSpreadMult: 0.7,
     moveSpreadMult: 1.6,
+    strafeSpreadMult: 1.9,
+    airborneSpreadPenalty: 0.038,
+    landingSpreadPenalty: 0.02,
     recoilPitch: 0.018,
     recoilYaw: 0.012,
-    recoilRecoveryRate: 5.5,
+    recoilRecoveryRate: 7.2,
+    recoilAccumulationRate: 0.85,
+    maxContinuousRecoilPitch: 0.16,
+    maxContinuousRecoilYaw: 0.065,
     isAutomatic: true,
     hasScope: false,
     scopeZoom: 1.15,
@@ -160,12 +195,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     reloadTime: 2.2,
     pellets: 7,
     damage: { head: 34, body: 18, leg: 14 },
-    spread: 0.065,
+    spread: 0.052,
+    firstShotSpread: 0.046,
     crouchSpreadMult: 0.8,
     moveSpreadMult: 1.35,
+    strafeSpreadMult: 1.5,
+    airborneSpreadPenalty: 0.035,
+    landingSpreadPenalty: 0.02,
     recoilPitch: 0.045,
     recoilYaw: 0.02,
-    recoilRecoveryRate: 4.5,
+    recoilRecoveryRate: 6.0,
+    recoilAccumulationRate: 1.1,
+    maxContinuousRecoilPitch: 0.24,
+    maxContinuousRecoilYaw: 0.08,
     isAutomatic: true,
     hasScope: false,
     scopeZoom: 1,
@@ -180,12 +222,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 11.0,
     reloadTime: 2.5,
     damage: { head: 156, body: 39, leg: 33 },
-    spread: 0.005,
+    spread: 0.0035,
+    firstShotSpread: 0.0012,
     crouchSpreadMult: 0.6,
-    moveSpreadMult: 3.0,
+    moveSpreadMult: 3.6,
+    strafeSpreadMult: 4.2,
+    airborneSpreadPenalty: 0.085,
+    landingSpreadPenalty: 0.045,
     recoilPitch: 0.025,
     recoilYaw: 0.014,
-    recoilRecoveryRate: 6.0,
+    recoilRecoveryRate: 7.5,
+    recoilAccumulationRate: 1.0,
+    maxContinuousRecoilPitch: 0.18,
+    maxContinuousRecoilYaw: 0.075,
     isAutomatic: true,
     hasScope: false,
     scopeZoom: 1.25,
@@ -200,12 +249,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 9.75,
     reloadTime: 2.5,
     damage: { head: 160, body: 40, leg: 34 },
-    spread: 0.004,
+    spread: 0.0028,
+    firstShotSpread: 0.0008,
     crouchSpreadMult: 0.55,
-    moveSpreadMult: 3.2,
+    moveSpreadMult: 4.2,
+    strafeSpreadMult: 4.8,
+    airborneSpreadPenalty: 0.098,
+    landingSpreadPenalty: 0.05,
     recoilPitch: 0.034,
     recoilYaw: 0.018,
-    recoilRecoveryRate: 5.0,
+    recoilRecoveryRate: 6.8,
+    recoilAccumulationRate: 1.15,
+    maxContinuousRecoilPitch: 0.23,
+    maxContinuousRecoilYaw: 0.09,
     isAutomatic: true,
     hasScope: false,
     scopeZoom: 1.25,
@@ -220,12 +276,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 14.5,
     reloadTime: 4.2,
     damage: { head: 95, body: 38, leg: 32 },
-    spread: 0.016,
-    crouchSpreadMult: 0.5, // Laser beam when crouched!
-    moveSpreadMult: 3.4,
+    spread: 0.012,
+    firstShotSpread: 0.007,
+    crouchSpreadMult: 0.45,
+    moveSpreadMult: 3.8,
+    strafeSpreadMult: 4.4,
+    airborneSpreadPenalty: 0.09,
+    landingSpreadPenalty: 0.045,
     recoilPitch: 0.02,
     recoilYaw: 0.016,
-    recoilRecoveryRate: 5.2,
+    recoilRecoveryRate: 6.5,
+    recoilAccumulationRate: 0.9,
+    maxContinuousRecoilPitch: 0.22,
+    maxContinuousRecoilYaw: 0.095,
     isAutomatic: true,
     hasScope: false,
     scopeZoom: 1.2,
@@ -240,12 +303,19 @@ export const WEAPONS: Record<WeaponId, WeaponData> = {
     fireRate: 0.75,
     reloadTime: 3.7,
     damage: { head: 255, body: 150, leg: 120 },
-    spread: 0.0008,
+    spread: 0.0004,
+    firstShotSpread: 0.0002,
     crouchSpreadMult: 0.5,
-    moveSpreadMult: 8.0,
+    moveSpreadMult: 12.0,
+    strafeSpreadMult: 15.0,
+    airborneSpreadPenalty: 0.24,
+    landingSpreadPenalty: 0.12,
     recoilPitch: 0.08,
     recoilYaw: 0.02,
-    recoilRecoveryRate: 3.0,
+    recoilRecoveryRate: 4.5,
+    recoilAccumulationRate: 2.0,
+    maxContinuousRecoilPitch: 0.32,
+    maxContinuousRecoilYaw: 0.08,
     isAutomatic: false,
     hasScope: true,
     scopeZoom: 3.5,
@@ -474,6 +544,162 @@ export function sampleWeaponRecoilStep(
   };
 }
 
+export type MovementAccuracyStateId =
+  | 'standing'
+  | 'walking'
+  | 'strafing_left'
+  | 'strafing_right'
+  | 'sprinting'
+  | 'jumping'
+  | 'falling'
+  | 'landing';
+
+export interface MovementAccuracyEvaluation {
+  state: MovementAccuracyStateId;
+  horizontalSpeed: number;
+  strafeSpeed: number;
+  forwardSpeed: number;
+  isGrounded: boolean;
+  verticalVelocity: number;
+  landingDip: number;
+  isCrouching: boolean;
+  isSprinting: boolean;
+  isScoped: boolean;
+}
+
+/**
+ * Decomposes player velocity in the player's yaw-relative reference frame.
+ * Identifies lateral strafing, sprinting, jumping, falling, and landing states.
+ */
+export function evaluateMovementState(
+  velocity: { x: number; y: number; z: number },
+  cameraYaw: number,
+  isGrounded: boolean,
+  landingDip: number,
+  isCrouching: boolean,
+  isSprinting: boolean,
+  isScoped: boolean
+): MovementAccuracyEvaluation {
+  const forwardX = -Math.sin(cameraYaw);
+  const forwardZ = -Math.cos(cameraYaw);
+  const rightX = Math.cos(cameraYaw);
+  const rightZ = -Math.sin(cameraYaw);
+
+  const forwardSpeed = velocity.x * forwardX + velocity.z * forwardZ;
+  const strafeSpeed = velocity.x * rightX + velocity.z * rightZ;
+  const horizontalSpeed = Math.hypot(velocity.x, velocity.z);
+
+  let state: MovementAccuracyStateId;
+  if (!isGrounded) {
+    state = velocity.y > 0.35 ? 'jumping' : 'falling';
+  } else if (landingDip > 0.025) {
+    state = 'landing';
+  } else if (horizontalSpeed < 0.35) {
+    state = 'standing';
+  } else if (isSprinting && horizontalSpeed > 4.5) {
+    state = 'sprinting';
+  } else if (strafeSpeed < -0.75) {
+    state = 'strafing_left';
+  } else if (strafeSpeed > 0.75) {
+    state = 'strafing_right';
+  } else {
+    state = 'walking';
+  }
+
+  return {
+    state,
+    horizontalSpeed,
+    strafeSpeed,
+    forwardSpeed,
+    isGrounded,
+    verticalVelocity: velocity.y,
+    landingDip,
+    isCrouching,
+    isSprinting,
+    isScoped,
+  };
+}
+
+/**
+ * Calculates complete unified bullet spread cone taking into account:
+ * - Weapon base spread and first-shot accuracy
+ * - ADS / Scoped state (precision boost or unscoped sniper penalty)
+ * - Stance (crouching accuracy boost)
+ * - Lateral strafe penalty (strafing left / right)
+ * - Ground speed penalty with smooth recovery
+ * - Airborne penalty (jumping vs falling)
+ * - Landing impact recovery
+ * - Sustained fire spray bloom
+ */
+export function computeWeaponSpread(
+  weapon: WeaponData,
+  movement: MovementAccuracyEvaluation,
+  continuousShotsFired: number,
+  movementInaccuracyAccumulator: number
+): {
+  finalSpread: number;
+  baseSpread: number;
+  movementPenalty: number;
+  airbornePenalty: number;
+  landingPenalty: number;
+  recoilBloom: number;
+} {
+  const isStandingStill = movement.horizontalSpeed < 0.35 && movement.isGrounded;
+  const isFirstShot = continuousShotsFired <= 1;
+
+  let baseSpread = isFirstShot && isStandingStill
+    ? (weapon.firstShotSpread ?? weapon.spread * 0.75)
+    : weapon.spread;
+
+  if (movement.isScoped) {
+    baseSpread *= weapon.hasScope ? 0.2 : 0.75;
+  } else if (weapon.hasScope) {
+    // Heavy unscoped sniper penalty (must use scope)
+    baseSpread = 0.088;
+  }
+
+  if (movement.isCrouching) {
+    baseSpread *= weapon.crouchSpreadMult;
+  }
+
+  let movementPenalty = 0;
+  let airbornePenalty = 0;
+  let landingPenalty = 0;
+
+  if (!movement.isGrounded) {
+    const baseAirborne = weapon.airborneSpreadPenalty ?? 0.09;
+    airbornePenalty = movement.state === 'jumping' ? baseAirborne * 1.35 : baseAirborne;
+  } else if (movement.state === 'landing') {
+    const baseLanding = weapon.landingSpreadPenalty ?? 0.04;
+    landingPenalty = baseLanding * Math.min(1.0, movement.landingDip / 0.14);
+  }
+
+  if (movement.isGrounded && movement.horizontalSpeed >= 0.35) {
+    const speedRatio = Math.min(1.0, movement.horizontalSpeed / 6.7);
+    const isStrafing = movement.state === 'strafing_left' || movement.state === 'strafing_right';
+    const mult = isStrafing
+      ? (weapon.strafeSpreadMult ?? weapon.moveSpreadMult * 1.25)
+      : weapon.moveSpreadMult;
+    const peakPenalty = weapon.spread * (mult - 1.0) * speedRatio;
+    movementPenalty = peakPenalty * Math.max(0.18, movementInaccuracyAccumulator);
+  }
+
+  const bloomShots = Math.max(0, continuousShotsFired - 1);
+  const accumRate = weapon.recoilAccumulationRate ?? 1.0;
+  const recoilBloom = Math.min(0.042, bloomShots * (weapon.recoilPitch * 0.26) * accumRate);
+
+  const finalSpread = baseSpread + movementPenalty + airbornePenalty + landingPenalty + recoilBloom;
+
+  return {
+    finalSpread,
+    baseSpread,
+    movementPenalty,
+    airbornePenalty,
+    landingPenalty,
+    recoilBloom,
+  };
+}
+
 export function computeEffectiveSpread(
   weapon: WeaponData,
   isMoving: boolean,
@@ -481,25 +707,18 @@ export function computeEffectiveSpread(
   isScoped: boolean,
   continuousShotsFired: number
 ): number {
-  let spread = weapon.spread;
-
-  if (isScoped && weapon.hasScope) {
-    spread *= 0.22;
-  } else if (isScoped) {
-    spread *= 0.72;
-  }
-
-  if (isCrouching) {
-    spread *= weapon.crouchSpreadMult;
-  }
-
-  if (isMoving) {
-    spread *= weapon.moveSpreadMult;
-  }
-
-  // Reward precision tap-firing: first shot has zero spray bloom
-  const bloomShots = Math.max(0, continuousShotsFired - 1);
-  const sprayBloom = Math.min(0.032, bloomShots * 0.0028);
-  return spread + sprayBloom;
+  const dummyMovement: MovementAccuracyEvaluation = {
+    state: isMoving ? 'strafing_left' : 'standing',
+    horizontalSpeed: isMoving ? 5.2 : 0,
+    strafeSpeed: isMoving ? 5.2 : 0,
+    forwardSpeed: 0,
+    isGrounded: true,
+    verticalVelocity: 0,
+    landingDip: 0,
+    isCrouching,
+    isSprinting: false,
+    isScoped,
+  };
+  return computeWeaponSpread(weapon, dummyMovement, continuousShotsFired, isMoving ? 1.0 : 0).finalSpread;
 }
 

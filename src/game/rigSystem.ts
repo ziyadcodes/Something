@@ -83,6 +83,7 @@ export interface OperatorRigBuild {
 
 export interface RigValidationResult {
   valid: boolean;
+  isValid: boolean;
   totalEnergy: number;
   maxEnergy: number;
   remainingEnergy: number;
@@ -370,16 +371,17 @@ export function validateRigBuild(build: Partial<OperatorRigBuild>): RigValidatio
 
   if (totalEnergy > MAX_RIG_ENERGY) {
     errors.push(
-      `Rig Energy Overload: ${totalEnergy}/${MAX_RIG_ENERGY} pts (${
+      `Rig Energy Overload: Energy budget exceeded (${totalEnergy}/${MAX_RIG_ENERGY} pts: ${
         ACTIVE_MODULES[slot1!]?.name
       } [${ACTIVE_MODULES[slot1!]?.energyCost}] + ${ACTIVE_MODULES[slot2!]?.name} [${
         ACTIVE_MODULES[slot2!]?.energyCost
-      }] exceeds 7 capacity).`
+      }] exceeds ${MAX_RIG_ENERGY} capacity).`
     );
   }
 
   return {
     valid: errors.length === 0,
+    isValid: errors.length === 0,
     totalEnergy,
     maxEnergy: MAX_RIG_ENERGY,
     remainingEnergy: Math.max(0, MAX_RIG_ENERGY - totalEnergy),

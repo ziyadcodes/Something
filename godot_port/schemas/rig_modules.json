@@ -1,0 +1,166 @@
+{
+  "maxEnergy": 7,
+  "activeModules": {
+    "echo_probe": {
+      "id": "echo_probe",
+      "name": "ECHO PROBE",
+      "codeName": "RCN-01 // SONAR PULSE",
+      "category": "RECON",
+      "energyCost": 3,
+      "creditCost": 200,
+      "activationMethod": "throw_deploy",
+      "cooldown": 16.0,
+      "maxCharges": 2,
+      "duration": 5.5,
+      "range": 24.0,
+      "deviceHp": 80,
+      "description": "Deploy a destructible acoustic scanning node that emits two temporary detection pulses."
+    },
+    "aegis": {
+      "id": "aegis",
+      "name": "AEGIS",
+      "codeName": "DEF-04 // HARD-LIGHT BARRIER",
+      "category": "DEFENCE",
+      "energyCost": 4,
+      "creditCost": 300,
+      "activationMethod": "ground_anchor",
+      "cooldown": 22.0,
+      "maxCharges": 1,
+      "duration": 18.0,
+      "range": 4.0,
+      "deviceHp": 400,
+      "description": "Project a 4-segment ballistic energy barrier anchored in front of the operator."
+    },
+    "mirage": {
+      "id": "mirage",
+      "name": "MIRAGE",
+      "codeName": "DEC-02 // HOLO-DECOY",
+      "category": "DECEPTION",
+      "energyCost": 2,
+      "creditCost": 150,
+      "activationMethod": "throw_deploy",
+      "cooldown": 14.0,
+      "maxCharges": 2,
+      "duration": 7.5,
+      "range": 18.0,
+      "deviceHp": 65,
+      "description": "Project a mobile holographic operator decoy that sprints forward along your aim vector."
+    },
+    "vector": {
+      "id": "vector",
+      "name": "VECTOR",
+      "codeName": "MOB-05 // THRUST BURST",
+      "category": "MOBILITY",
+      "energyCost": 4,
+      "creditCost": 250,
+      "activationMethod": "instant_burst",
+      "cooldown": 14.0,
+      "maxCharges": 1,
+      "duration": 0.85,
+      "range": 9.5,
+      "deviceHp": 0,
+      "description": "Fire micro-thrusters to execute a rapid directional movement burst along input vector."
+    },
+    "static_field": {
+      "id": "static_field",
+      "name": "STATIC FIELD",
+      "codeName": "CTL-03 // EMP DISRUPTOR",
+      "category": "CONTROL",
+      "energyCost": 3,
+      "creditCost": 200,
+      "activationMethod": "throw_deploy",
+      "cooldown": 17.0,
+      "maxCharges": 2,
+      "duration": 7.0,
+      "range": 4.2,
+      "deviceHp": 90,
+      "description": "Deploy a localized electromagnetic containment emitter that slows enemy movement by 45%."
+    },
+    "relay": {
+      "id": "relay",
+      "name": "RELAY",
+      "codeName": "SUP-06 // TACTICAL UPLINK",
+      "category": "SUPPORT",
+      "energyCost": 2,
+      "creditCost": 150,
+      "activationMethod": "ground_anchor",
+      "cooldown": 15.0,
+      "maxCharges": 2,
+      "duration": 12.0,
+      "range": 16.0,
+      "deviceHp": 100,
+      "description": "Anchor a squad telemetry relay that links nearby teammates within 16m and grants +20 overshield."
+    }
+  },
+  "passiveModules": {
+    "signal_dampener": {
+      "id": "signal_dampener",
+      "name": "SIGNAL DAMPENER",
+      "codeName": "PAS-01 // LOW-OBSERVABLE COATING",
+      "reconDurationMultiplier": 0.55,
+      "reconRadiusMultiplier": 0.75,
+      "deployableHpMultiplier": 1.0,
+      "cooldownRateMultiplier": 1.0
+    },
+    "reinforced_systems": {
+      "id": "reinforced_systems",
+      "name": "REINFORCED SYSTEMS",
+      "codeName": "PAS-02 // HARDENED COMPOSITE",
+      "reconDurationMultiplier": 1.0,
+      "reconRadiusMultiplier": 1.0,
+      "deployableHpMultiplier": 1.3,
+      "cooldownRateMultiplier": 1.0
+    },
+    "energy_recovery": {
+      "id": "energy_recovery",
+      "name": "ENERGY RECOVERY",
+      "codeName": "PAS-03 // CAPACITOR FLUX",
+      "reconDurationMultiplier": 1.0,
+      "reconRadiusMultiplier": 1.0,
+      "deployableHpMultiplier": 1.0,
+      "cooldownRateMultiplier": 1.18
+    }
+  },
+  "presets": [
+    {
+      "id": "preset_breach",
+      "name": "VANGUARD BREACHER",
+      "chassisId": "jett",
+      "activeSlot1": "vector",
+      "activeSlot2": "echo_probe",
+      "passiveSlot": "energy_recovery",
+      "primaryWeapon": "vandal",
+      "secondaryWeapon": "classic"
+    },
+    {
+      "id": "preset_bastion",
+      "name": "CITADEL SENTINEL",
+      "chassisId": "sage",
+      "activeSlot1": "aegis",
+      "activeSlot2": "static_field",
+      "passiveSlot": "reinforced_systems",
+      "primaryWeapon": "phantom",
+      "secondaryWeapon": "ghost"
+    },
+    {
+      "id": "preset_phantom",
+      "name": "GHOST INFILTRATOR",
+      "chassisId": "omen",
+      "activeSlot1": "vector",
+      "activeSlot2": "mirage",
+      "passiveSlot": "signal_dampener",
+      "primaryWeapon": "phantom",
+      "secondaryWeapon": "sheriff"
+    },
+    {
+      "id": "preset_overwatch",
+      "name": "TACTICAL OVERWATCH",
+      "chassisId": "sova",
+      "activeSlot1": "echo_probe",
+      "activeSlot2": "relay",
+      "passiveSlot": "energy_recovery",
+      "primaryWeapon": "operator",
+      "secondaryWeapon": "ghost"
+    }
+  ]
+}

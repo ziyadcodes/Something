@@ -32,6 +32,16 @@ import {
   Swords,
 } from 'lucide-react';
 
+import { RigWorkshop } from './RigWorkshop';
+import {
+  OperatorRigBuild,
+  DEFAULT_RIG_PRESETS,
+  ACTIVE_MODULES,
+  PASSIVE_MODULES,
+  calculateRigEnergy,
+  MAX_RIG_ENERGY,
+} from '../game/rigSystem';
+
 interface TitleScreenProps {
   selectedAgent: AgentId;
   selectedMode: GameMode;
@@ -41,12 +51,16 @@ interface TitleScreenProps {
   settings: GameSettings;
   isMultiplayerConnected: boolean;
   currentRoomId: string;
+  activeRigBuild?: OperatorRigBuild;
+  savedRigPresets?: OperatorRigBuild[];
   onSelectAgent: (agent: AgentId) => void;
   onSelectMode: (mode: GameMode) => void;
   onSelectMap: (mapId: MapId) => void;
   onSelectTeam: (team: TeamSide) => void;
   onUpdateProfile: (profile: PlayerProfile) => void;
   onUpdateSettings: (settings: GameSettings) => void;
+  onUpdateRigBuild?: (build: OperatorRigBuild) => void;
+  onSaveRigPresets?: (presets: OperatorRigBuild[]) => void;
   onJoinMultiplayerRoom: (
     roomId: string,
     mode: GameMode,
@@ -59,6 +73,7 @@ interface TitleScreenProps {
 
 type NavTab =
   | 'home'
+  | 'rig_workshop'
   | 'singleplayer'
   | 'multiplayer'
   | 'agents'
@@ -121,12 +136,16 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   settings,
   isMultiplayerConnected,
   currentRoomId,
+  activeRigBuild,
+  savedRigPresets,
   onSelectAgent,
   onSelectMode,
   onSelectMap,
   onSelectTeam,
   onUpdateProfile,
   onUpdateSettings,
+  onUpdateRigBuild,
+  onSaveRigPresets,
   onJoinMultiplayerRoom,
   onStartGame,
   onOpenSettings,
@@ -213,6 +232,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           {(
             [
               { id: 'home', label: 'HOME' },
+              { id: 'rig_workshop', label: 'RIG WORKSHOP' },
               { id: 'singleplayer', label: 'SINGLE PLAYER' },
               { id: 'multiplayer', label: 'MULTIPLAYER' },
               { id: 'agents', label: 'AGENTS' },
@@ -370,6 +390,43 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   </div>
                 </button>
               </div>
+
+              {/* Modular Rig System Loadout Badge on Home */}
+              {activeRigBuild && (
+                <div className="bg-slate-950/90 border border-slate-700/80 p-3.5 clip-val-corner shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-amber-400" />
+                      <span className="font-valorant text-lg font-bold text-white tracking-wide">
+                        TACTICAL RIG // {activeRigBuild.name}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                      {calculateRigEnergy(activeRigBuild.activeSlot1, activeRigBuild.activeSlot2)}/{MAX_RIG_ENERGY} ENERGY
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-[10px] text-slate-300 mb-2.5">
+                    <div className="bg-slate-900/80 p-2 rounded border border-slate-800">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold">SLOT 1 [Q]</div>
+                      <div className="font-bold text-white truncate">{ACTIVE_MODULES[activeRigBuild.activeSlot1]?.name || 'MODULE 1'}</div>
+                    </div>
+                    <div className="bg-slate-900/80 p-2 rounded border border-slate-800">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold">SLOT 2 [E]</div>
+                      <div className="font-bold text-white truncate">{ACTIVE_MODULES[activeRigBuild.activeSlot2]?.name || 'MODULE 2'}</div>
+                    </div>
+                    <div className="bg-slate-900/80 p-2 rounded border border-slate-800">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold">PASSIVE</div>
+                      <div className="font-bold text-amber-400 truncate">{PASSIVE_MODULES[activeRigBuild.passiveSlot]?.name || 'PASSIVE'}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveNav('rig_workshop')}
+                    className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-amber-300 text-xs font-bold rounded cursor-pointer transition-colors text-center"
+                  >
+                    CUSTOMIZE IN RIG WORKSHOP →
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Center 3 columns kept open so the live 3D Agent & Industrial Reactor Bunker shine through */}
@@ -460,6 +517,25 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB: RIG WORKSHOP */}
+        {activeNav === 'rig_workshop' && (
+          <div className="w-full pointer-events-auto">
+            <RigWorkshop
+              currentBuild={activeRigBuild || DEFAULT_RIG_PRESETS[0]}
+              savedPresets={savedRigPresets || DEFAULT_RIG_PRESETS}
+              onUpdateBuild={(newBuild) => {
+                onUpdateRigBuild?.(newBuild);
+              }}
+              onSavePresets={(newPresets) => {
+                onSaveRigPresets?.(newPresets);
+              }}
+              onDeploy={() => {
+                onStartGame();
+              }}
+            />
           </div>
         )}
 

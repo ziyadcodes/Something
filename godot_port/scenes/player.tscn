@@ -1,0 +1,66 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_controller"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
+albedo_color = Color(0.15, 0.18, 0.22, 1)
+metallic = 0.8
+roughness = 0.3
+
+[sub_resource type="BoxMesh" id="BoxMesh_gun"]
+material = SubResource("StandardMaterial3D_gun")
+size = Vector3(0.12, 0.16, 0.65)
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_controller")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="CameraMount" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraMount"]
+current = true
+fov = 85.0
+
+[node name="WeaponRayCast" type="RayCast3D" parent="CameraMount/Camera3D"]
+target_position = Vector3(0, 0, -100)
+collision_mask = 5
+
+[node name="ViewModel" type="Node3D" parent="CameraMount/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.24, -0.22, -0.52)
+
+[node name="GunMesh" type="MeshInstance3D" parent="CameraMount/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_gun")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="CenterContainer" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CrosshairDot" type="ColorRect" parent="HUD/Crosshair"]
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 2
+color = Color(0, 1, 0.8, 0.9)
+
+[node name="InfoLabel" type="Label" parent="HUD"]
+offset_left = 32.0
+offset_top = 32.0
+offset_right = 400.0
+offset_bottom = 90.0
+text = "RADIANT PROTOCOL // GODOT 4.7
+WASD: Move | Mouse: Aim | LMB: Shoot | RMB: ADS | R: Reload"

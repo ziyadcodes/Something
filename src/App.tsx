@@ -22,6 +22,12 @@ import {
   recordMatchCompletion,
   detectHardwareProfile,
 } from './game/progression';
+import {
+  loadSavedRigState,
+  saveRigState,
+  OperatorRigBuild,
+  SavedRigWorkshopState,
+} from './game/rigSystem';
 import { multiplayerClient } from './network/multiplayerClient';
 import { HUD } from './components/HUD';
 import { BuyMenu } from './components/BuyMenu';
@@ -34,8 +40,9 @@ export default function App() {
   const canvasMountRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ValorantEngine | null>(null);
 
+  const [rigState, setRigState] = useState<SavedRigWorkshopState>(() => loadSavedRigState());
   const [appState, setAppState] = useState<'title' | 'playing' | 'paused' | 'gameover'>('title');
-  const [selectedAgent, setSelectedAgent] = useState<AgentId>('jett');
+  const [selectedAgent, setSelectedAgent] = useState<AgentId>(() => rigState.activeBuild.chassisId || 'jett');
   const [selectedMode, setSelectedMode] = useState<GameMode>('standard');
   const [selectedMap, setSelectedMap] = useState<MapId>('industrial');
   const [playerTeam, setPlayerTeam] = useState<TeamSide>('attackers');
@@ -167,6 +174,7 @@ export default function App() {
 
     engine.playerCallsign = profile.callsign;
     engine.applySettings(settings);
+    engine.setRigBuild(rigState.activeBuild);
     engineRef.current = engine;
 
     // Connect to multiplayer room relay
@@ -295,6 +303,24 @@ export default function App() {
     [profile.callsign, selectedAgent, playerTeam]
   );
 
+  const handleUpdateRigBuild = useCallback((nextBuild: OperatorRigBuild) => {
+    setRigState((prev) => {
+      const updated = { ...prev, activeBuild: nextBuild };
+      saveRigState(updated);
+      return updated;
+    });
+    setSelectedAgent(nextBuild.chassisId);
+    engineRef.current?.setRigBuild(nextBuild);
+  }, []);
+
+  const handleSaveRigPresets = useCallback((presets: OperatorRigBuild[]) => {
+    setRigState((prev) => {
+      const updated = { ...prev, savedPresets: presets };
+      saveRigState(updated);
+      return updated;
+    });
+  }, []);
+
   const startGame = useCallback(() => {
     if (!engineRef.current) return;
     if (document.activeElement instanceof HTMLElement) {
@@ -302,6 +328,7 @@ export default function App() {
     }
     engineRef.current.setMap(selectedMap);
     engineRef.current.setAgent(selectedAgent);
+    engineRef.current.setRigBuild(rigState.activeBuild);
     engineRef.current.playerTeam = playerTeam;
     engineRef.current.gameMode = selectedMode;
     engineRef.current.applySettings(settings);
@@ -311,7 +338,7 @@ export default function App() {
     setModalState(null);
     setKillfeed([]);
     engineRef.current.requestPointerLock();
-  }, [selectedAgent, selectedMode, selectedMap, playerTeam, settings]);
+  }, [selectedAgent, selectedMode, selectedMap, playerTeam, settings, rigState.activeBuild]);
 
   const resumeGame = useCallback(() => {
     setAppState('playing');
@@ -341,7 +368,7 @@ export default function App() {
     engineRef.current?.purchaseShield(type);
   };
 
-  const handleBuyAbility = (key: 'c' | 'q') => {
+  const handleBuyAbility = (key: 'c' | 'q' | 'e') => {
     engineRef.current?.purchaseAbility(key);
   };
 
@@ -406,6 +433,8 @@ export default function App() {
           settings={settings}
           isMultiplayerConnected={hudState.isMultiplayerConnected}
           currentRoomId={hudState.roomId}
+          activeRigBuild={rigState.activeBuild}
+          savedRigPresets={rigState.savedPresets}
           onSelectAgent={(agent) => {
             setSelectedAgent(agent);
             engineRef.current?.setAgent(agent);
@@ -421,6 +450,8 @@ export default function App() {
           }}
           onUpdateProfile={handleUpdateProfile}
           onUpdateSettings={handleUpdateSettings}
+          onUpdateRigBuild={handleUpdateRigBuild}
+          onSaveRigPresets={handleSaveRigPresets}
           onJoinMultiplayerRoom={handleJoinMultiplayerRoom}
           onStartGame={startGame}
           onOpenSettings={() => setIsSettingsOpen(true)}
@@ -495,6 +526,7 @@ export default function App() {
         currentShield={hudState.shield}
         activeWeaponId={hudState.activeWeaponId}
         selectedAgent={selectedAgent}
+        rigBuild={hudState.rigBuild || rigState.activeBuild}
         onClose={() => {
           setIsBuyMenuOpen(false);
           engineRef.current?.requestPointerLock();
