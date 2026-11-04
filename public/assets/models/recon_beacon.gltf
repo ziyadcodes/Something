@@ -1,0 +1,94 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RadiantProtocol-AssetPipeline"
+  },
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "ReconBeacon"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "ReconBeacon",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "ReconBeacon_PBR",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0,
+          0.95,
+          1,
+          1
+        ],
+        "metallicFactor": 0.75,
+        "roughnessFactor": 0.22
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 168,
+      "uri": "data:application/octet-stream;base64,7FE4vgAAgL7sUTg+7FE4PgAAgL7sUTg+7FE4PgAAgD7sUTg+7FE4vgAAgD7sUTg+7FE4vgAAgL7sUTi+7FE4vgAAgD7sUTi+7FE4PgAAgD7sUTi+7FE4PgAAgL7sUTi+AAABAAIAAAACAAMABAAFAAYABAAGAAcAAwACAAYAAwAGAAUAAAAHAAEAAAAEAAcAAQAHAAYAAQAGAAIABAAAAAMABAADAAUA"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 96,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+        -0.18,
+        -0.25,
+        -0.18
+      ],
+      "max": [
+        0.18,
+        0.25,
+        0.18
+      ]
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ]
+}

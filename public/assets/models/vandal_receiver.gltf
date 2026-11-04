@@ -1,0 +1,94 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RadiantProtocol-AssetPipeline"
+  },
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "VandalReceiver"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "VandalReceiver",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "VandalReceiver_PBR",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.14,
+          0.16,
+          0.19,
+          1
+        ],
+        "metallicFactor": 0.88,
+        "roughnessFactor": 0.24
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 168,
+      "uri": "data:application/octet-stream;base64,7FE4va5HYb0pXI8+7FE4Pa5HYb0pXI8+7FE4Pa5HYT0pXI8+7FE4va5HYT0pXI8+7FE4va5HYb0pXI++7FE4va5HYT0pXI++7FE4Pa5HYT0pXI++7FE4Pa5HYb0pXI++AAABAAIAAAACAAMABAAFAAYABAAGAAcAAwACAAYAAwAGAAUAAAAHAAEAAAAEAAcAAQAHAAYAAQAGAAIABAAAAAMABAADAAUA"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 96,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+        -0.045,
+        -0.055,
+        -0.28
+      ],
+      "max": [
+        0.045,
+        0.055,
+        0.28
+      ]
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ]
+}

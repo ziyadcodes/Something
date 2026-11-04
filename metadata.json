@@ -1,0 +1,6 @@
+{
+  "name": "VALORANT - Radiant Protocol 3D",
+  "description": "Tactical 3D first-person shooter inspired by Valorant with agents, abilities, buy phase economy, spike plant & defuse, realistic gunplay recoil, AI teammates & enemies, and authentic HUD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

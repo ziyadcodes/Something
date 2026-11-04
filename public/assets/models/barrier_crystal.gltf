@@ -1,0 +1,94 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "RadiantProtocol-AssetPipeline"
+  },
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "BarrierCrystal"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "BarrierCrystal",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "BarrierCrystal_PBR",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.22,
+          0.74,
+          0.97,
+          0.92
+        ],
+        "metallicFactor": 0.25,
+        "roughnessFactor": 0.14
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 168,
+      "uri": "data:application/octet-stream;base64,MzNzv5qZmb89Ctc+MzNzP5qZmb89Ctc+MzNzP5qZmT89Ctc+MzNzv5qZmT89Ctc+MzNzv5qZmb89Cte+MzNzv5qZmT89Cte+MzNzP5qZmT89Cte+MzNzP5qZmb89Cte+AAABAAIAAAACAAMABAAFAAYABAAGAAcAAwACAAYAAwAGAAUAAAAHAAEAAAAEAAcAAQAHAAYAAQAGAAIABAAAAAMABAADAAUA"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 96,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+        -0.95,
+        -1.2,
+        -0.42
+      ],
+      "max": [
+        0.95,
+        1.2,
+        0.42
+      ]
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ]
+}
